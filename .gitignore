@@ -3,3 +3,11 @@
 ################################################################################
 
 /.idea/.idea.DataGeneratorAndSorter/.idea
+/.idea/.idea.DataGeneratorAndSorter
+/.vs
+/DataGenerator/bin/Debug/net6.0
+/DataGenerator/obj
+/DataGenerator.Test/bin/Debug/net6.0
+/DataGenerator.Test/obj
+/DataSorter/bin/Debug/net6.0
+/DataSorter/obj
