@@ -45,7 +45,7 @@ namespace DataGenerator
         private string GetRandomString()
         {
             var values = DataSet.GetStringData();
-            var randomWordsCount = random.Next(1, 5);
+            var randomWordsCount = random.Next(2, 5);
             for (int i = 0; i < randomWordsCount; i++)
             {
                 var randomEntry = random.Next(0, values.Length);

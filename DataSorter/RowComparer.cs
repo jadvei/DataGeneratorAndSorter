@@ -1,5 +1,4 @@
-﻿using DataGenerator;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -24,7 +23,7 @@ namespace DataSorter
                 return -1;
             }
 
-            var compareResult = string.Compare(row1.Value.Text, row2.Value.Text);
+            var compareResult = string.CompareOrdinal(row1.Value.Text, row2.Value.Text);
 
             if (compareResult != 0)
             {
@@ -32,7 +31,7 @@ namespace DataSorter
             }
             else
             {
-                return int.Parse(row1.Value.Number).CompareTo(int.Parse(row2.Value.Number));
+                return row1.Value.GetNumber().CompareTo(row2.Value.GetNumber());
             }
         }
     }

@@ -13,7 +13,7 @@ namespace DataGenerator
         public void Generate(StreamWriter streamWriter, double outputFileSize)
         {
             var dataGenerator = new RandomDataFactory<DataStructure>();
-            var totalWritedBytes = 0;
+            ulong totalWritedBytes = 0L;
 
             var randomRepeatSave = GetRandomRepeat();
             var randomRepeatInsert = GetRandomRepeat();
@@ -36,7 +36,7 @@ namespace DataGenerator
                 }
 
                 var stringToWrite = data.ToString();
-                var byteCount = Encoding.UTF8.GetByteCount(stringToWrite);
+                var byteCount = (uint)Encoding.UTF8.GetByteCount(stringToWrite);
                 totalWritedBytes += byteCount;
                 streamWriter.WriteLine(stringToWrite);
 
@@ -47,7 +47,7 @@ namespace DataGenerator
 
         private static int GetRandomRepeat()
         {
-            return random.Next(10, 100);
+            return random.Next(100, 150);
         }
     }
 }

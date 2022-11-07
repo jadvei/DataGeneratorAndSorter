@@ -1,5 +1,4 @@
-﻿using DataGenerator;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,17 +10,21 @@ namespace DataSorter
 {
     internal class Merger
     {
+        private Settings _settings;
         private const string TempFileExtension = ".tmp";
-        private const string UnsortedFileExtension = ".unsorted";
-        private const string SortedFileExtension = ".sorted";
-        private const string fileLocation = @"./Sorter";
-        private object lockObj = new object();
+
+        public Merger(Settings settings)
+        {
+            this._settings = settings;
+        }
+
         public void MergeFiles(IReadOnlyList<string> sortedFiles, Stream target)
         {
+            var chunkCounter = sortedFiles.Count();
             var done = false;
             while (!done)
             {
-                var runSize = 10;
+                var runSize = _settings.MergeChunkSize;
                 var finalRun = sortedFiles.Count <= runSize;
 
                 if (finalRun)
@@ -30,28 +33,23 @@ namespace DataSorter
                     return;
                 }
 
-                var runs = sortedFiles.Chunk(runSize);
-                var chunkCounter = sortedFiles.Count();
-                Parallel.ForEach(runs, new ParallelOptions { MaxDegreeOfParallelism = 8 } , files =>
+                var runs = sortedFiles.Chunk(runSize).Select(x => new { Files = x, OutputFileName = $"{++chunkCounter}{_settings.SortedFileExtension}{TempFileExtension}" });
+                
+                Parallel.ForEach(runs, new ParallelOptions { MaxDegreeOfParallelism = 8 }, chunk =>
                 {
-                    string outputFilename;
-                    lock (lockObj)
+                    var outputFilename = chunk.OutputFileName;
+                    if (chunk.Files.Length == 1)
                     {
-                        outputFilename = $"{++chunkCounter}{SortedFileExtension}{TempFileExtension}";
-                    }
-
-                    if (files.Length == 1)
-                    {
-                        File.Move(GetFullPath(files.First()), GetFullPath(outputFilename.Replace(TempFileExtension, string.Empty)));
+                        File.Move(GetFullPath(chunk.Files.First()), GetFullPath(outputFilename.Replace(TempFileExtension, string.Empty)));
                         return;
                     }
 
                     var outputStream = File.OpenWrite(GetFullPath(outputFilename));
-                    Merge(files, outputStream);
+                    Merge(chunk.Files, outputStream);
                     File.Move(GetFullPath(outputFilename), GetFullPath(outputFilename.Replace(TempFileExtension, string.Empty)), true);
                 });
 
-                sortedFiles = Directory.GetFiles(fileLocation, $"*{SortedFileExtension}")
+                sortedFiles = Directory.GetFiles(_settings.TempLocation, $"*{_settings.SortedFileExtension}")
                     .OrderBy(x =>
                     {
                         var filename = Path.GetFileNameWithoutExtension(x);
@@ -68,7 +66,7 @@ namespace DataSorter
             }
         }
 
-        private async void Merge(IReadOnlyList<string> filesToMerge, Stream outputStream)
+        private void Merge(IReadOnlyList<string> filesToMerge, Stream outputStream)
         {
             var (streamReaders, rows) = InitializeStreamReaders(filesToMerge);
             var finishedStreamReaders = new List<int>(streamReaders.Length);
@@ -91,14 +89,13 @@ namespace DataSorter
                     continue;
                 }
 
-                var value = await streamReaders[streamReaderIndex].ReadLineAsync();
+                var value = streamReaders[streamReaderIndex].ReadLine();
                 if (value == null)
                 {
-                    continue;
+                    break;
                 }
 
-                var splited = value.Split('.');
-                rows[0] = new Row { Value = new DataStructure { Number = splited[0], Text = splited[1] }, StreamReader = streamReaderIndex };
+                rows[0] = new Row { Value = DataStructure.FromString(value), StreamReader = streamReaderIndex };
             }
 
             CleanupRun(streamReaders, filesToMerge);
@@ -114,7 +111,8 @@ namespace DataSorter
         {
             var streamReaders = new StreamReader[sortedFiles.Count];
             var rows = new ConcurrentBag<Row>();
-            Parallel.For(0, sortedFiles.Count, i =>
+
+            for (var i = 0; i < sortedFiles.Count; i++)
             {
                 var sortedFilePath = GetFullPath(sortedFiles[i]);
                 var sortedFileStream = File.OpenRead(sortedFilePath);
@@ -123,17 +121,16 @@ namespace DataSorter
 
                 if (value == null)
                 {
-                    return;
+                    continue;
                 }
 
-                var splited = value.Split('.');
                 var row = new Row
                 {
-                    Value = new DataStructure { Number = splited[0], Text = splited[1] },
+                    Value = DataStructure.FromString(value),
                     StreamReader = i
                 };
                 rows.Add(row);
-            });
+            }
 
             return (streamReaders, rows.ToList());
         }
@@ -165,7 +162,7 @@ namespace DataSorter
 
         private string GetFullPath(string filename)
         {
-            return Path.Combine(fileLocation, Path.GetFileName(filename));
+            return Path.Combine(_settings.TempLocation, Path.GetFileName(filename));
         }
     }
 }

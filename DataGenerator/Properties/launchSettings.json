@@ -1,8 +1,11 @@
 {
   "profiles": {
+    "WSL": {
+      "commandName": "WSL2",
+      "distributionName": ""
+    },
     "DataGenerator": {
-      "commandName": "Project",
-      "commandLineArgs": "1"
+      "commandName": "Project"
     }
   }
 }

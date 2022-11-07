@@ -11,3 +11,6 @@
 /DataGenerator.Test/obj
 /DataSorter/bin/Debug/net6.0
 /DataSorter/obj
+/DataGenerator.Test/bin/Release/net6.0
+/DataSorter/bin/Release/net6.0
+/DataGenerator/bin/Release/net6.0

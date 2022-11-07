@@ -9,13 +9,19 @@ namespace DataSorter
         public static void Main(params string[] args)
         {
             var sorter = new DataSorter();
+            var settings = new Settings();
             var stopWatch = Stopwatch.StartNew();
 
-            using (var source = new FileStream(@"C:\Users\Timer\source\repos\DataGenerator\DataGenerator\bin\Debug\net6.0\output.txt", FileMode.Open))
-            using (var target = new FileStream(@".\sortedResult.txt", FileMode.Create))
+            if (!Directory.Exists(settings.TempLocation))
+            { 
+                Directory.CreateDirectory(settings.TempLocation);
+            }
+
+            using (var source = new FileStream(@"", FileMode.Open))
+            using (var target = new FileStream(@"", FileMode.Create))
             using (var sourceReader = new StreamReader(source))
             {
-                sorter.SortStream(sourceReader, target);
+                sorter.SortStream(sourceReader, target, settings);
             }
 
             stopWatch.Stop();
